@@ -1,0 +1,194 @@
+// This is your Prisma schema file, learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator nestjsDto {
+  provider                        = "prisma-generator-nestjs-dto"
+  output                          = "../src/generated"
+  outputToNestJsResourceStructure = "false"
+  flatResourceStructure           = "false"
+  exportRelationModifierClasses   = "true"
+  reExport                        = "true"
+  createDtoPrefix                 = "Create"
+  updateDtoPrefix                 = "Update"
+  dtoSuffix                       = "Dto"
+  entityPrefix                    = ""
+  entitySuffix                    = "Entity"
+  classValidation                 = "true"
+  fileNamingStyle                 = "kebab"
+  noDependencies                  = "false"
+  outputType                      = "class"
+  prettier                        = "true"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  ADMIN
+  USER
+}
+
+enum LoginType {
+  LOCAL
+  GOOGLE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Language {
+  VIETNAMESE
+  ENGLISH
+}
+
+enum InteractionType {
+  RATING
+  VIEW_COLLABORATIVE
+  VIEW_CONTENT_BASED
+}
+
+enum PeriodType {
+  DAYS
+  WEEK
+  MONTH
+}
+
+enum ModelType {
+  COLLABORATIVE
+  CONTENT_BASED
+}
+
+model User {
+  id        String    @id(map: "pk_user") @default(dbgenerated("uuid_generate_v4()")) @map("id") @db.VarChar(255)
+  name      String    @map("name") @db.VarChar(255)
+  country   String?   @default("Viet Nam") @map("country") @db.VarChar(255)
+  avatar    String?   @map("avatar") @db.VarChar(255)
+  email     String    @unique @map("email") @db.VarChar(255)
+  dob       DateTime  @map("date_of_birth") @db.Timestamptz(6)
+  gender    Gender    @default(FEMALE) @map("gender")
+  password  String    @map("password") @db.VarChar(255)
+  roleId    Int       @default(2) @map("role_id") @db.Integer
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  loginType LoginType @default(LOCAL) @map("login_type")
+
+  interactions Interaction[]
+  role         Role          @relation(fields: [roleId], references: [id], onDelete: Cascade, map: "fk_user_role")
+  tokens       Token[]
+
+  @@map("user")
+}
+
+model Token {
+  id           String @id(map: "pk_token") @default(dbgenerated("uuid_generate_v4()")) @map("id") @db.Uuid
+  deviceId     String @map("device_id")
+  userId       String @map("user_id") @db.VarChar(255)
+  refreshToken String @map("refresh_token") @db.VarChar(255)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_token_user")
+
+  @@unique([deviceId, userId], map: "ixuq_token_user_device")
+  @@map("token")
+}
+
+model Role {
+  id   Int      @id(map: "pk_role") @map("id") @db.Integer
+  type RoleType @default(USER) @map("type")
+
+  users User[]
+
+  @@map("role")
+}
+
+model Book {
+  id                      String    @id(map: "pk_book") @default(dbgenerated("uuid_generate_v4()")) @map("id")
+  title                   String    @map("title") @db.VarChar(255)
+  description             String?   @map("description") @db.Text
+  preprocessedDescription String?   @map("preprocessed_description") @db.Text
+  bookCover               String?   @map("book_cover") @db.VarChar(255)
+  language                Language? @map("language")
+  imageUrl                String?   @map("image_url") @db.VarChar(255)
+  releaseDate             DateTime? @map("release_date") @db.Date
+  publisher               String?   @map("publisher") @db.VarChar(255)
+  numberOfPages           Int?      @map("number_of_pages") @db.Integer
+  price                   Float?    @map("price") @db.Real
+  averageRating           Float?    @map("average_rating") @db.Real
+  numberOfRatings         Int?      @map("number_of_ratings") @db.Integer
+  numberOfReviews         Int?      @map("number_of_reviews") @db.Integer
+  sourceId                Int       @map("source_id") @db.Integer
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  categories              String?   @map("categories") @db.Text
+
+  source       Source         @relation(fields: [sourceId], onDelete: Cascade, onUpdate: Cascade, references: [id])
+  authors      AuthorToBook[]
+  interactions Interaction[]
+
+  @@map("book")
+}
+
+model Author {
+  id     String  @id(map: "pk_author") @default(dbgenerated("uuid_generate_v4()")) @map("id") @db.Uuid
+  name   String  @map("name") @db.VarChar(255)
+  avatar String? @map("avatar") @db.VarChar(255)
+
+  authors AuthorToBook[]
+
+  @@map("author")
+}
+
+model AuthorToBook {
+  authorId String @map("author_id") @db.Uuid
+  bookId   String @map("book_id")
+
+  author Author @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([authorId, bookId])
+  @@map("author_to_book")
+}
+
+model Source {
+  id   Int    @id(map: "pk_source") @map("id") @db.Integer
+  name String @map("name") @db.VarChar(255)
+
+  books Book[]
+
+  @@map("source")
+}
+
+model Interaction {
+  userId    String          @map("user_id") @db.VarChar(255)
+  bookId    String          @map("book_id")
+  type      InteractionType @default(RATING) @map("type")
+  value     Float           @map("value") @db.Real
+  trained   Boolean         @default(false) @map("trained")
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, bookId, type])
+  @@map("interaction")
+}
+
+model ModelRequest {
+  id        String    @id(map: "pk_model_request") @default(dbgenerated("uuid_generate_v4()")) @map("id") @db.Uuid
+  modelType ModelType @map("model_type")
+  count     Int       @map("count") @db.Integer
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("model_request")
+}
+
+model SettingCrawl {
+  id         String     @id(map: "pk_setting_crawl") @default(dbgenerated("uuid_generate_v4()")) @map("id") @db.Uuid
+  periodType PeriodType @map("period_type")
+  value      String     @map("value") @db.VarChar(255)
+  time       String     @map("time")
+}
