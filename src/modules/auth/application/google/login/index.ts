@@ -1,2 +1,2 @@
 export * from "./loginByGoogle.endpoint";
-// export * from "./loginByGoogle.handler";
+export * from "./loginByGoogle.handler";

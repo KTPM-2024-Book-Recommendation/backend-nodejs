@@ -39,20 +39,28 @@ export class RefreshTokenGuard implements CanActivate {
         },
       });
 
-      const existedToken = existedUser.tokens.find(
-        (existedToken) => existedToken.deviceId === body.deviceId,
+      const existedTokens = existedUser.tokens.filter(
+        (existedToken) => existedToken.deviceId.startsWith(body.deviceId),
       );
 
-      if (!existedToken) {
+      if (existedTokens.length == 0) {
         throw new UnauthorizedException('You give me the wrong refresh token');
       }
 
-      const isRightRefreshToken = await bcrypt.compare(
-        token,
-        existedToken.refreshToken,
-      );
+      let isRightInputRefreshToken  = false;
+      for (const existedToken of existedTokens)  {
+        const isRightRefreshToken = await bcrypt.compare(
+          token,
+          existedToken.refreshToken,
+        );
 
-      if (!isRightRefreshToken) {
+        if (isRightRefreshToken)  {
+          isRightInputRefreshToken  = true
+          break;
+        }
+      }
+
+      if (!isRightInputRefreshToken) {
         throw new UnauthorizedException('You give me the wrong refresh token');
       }
 

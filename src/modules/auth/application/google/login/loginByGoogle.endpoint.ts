@@ -17,11 +17,14 @@ import { LoginUserDto } from 'src/common/dto/loginUser.dto';
 export class LoginByGoogleEndpoint {
   constructor(protected queryBus: QueryBus) { }
 
+  @ApiOperation({ summary: 'Initiate Google Authentication' })
   @Get('google')
   public async googleAuth() {}
 
+  @ApiOperation({ summary: 'Handle Google OAuth2 Callback' })
   @Get('google-redirect')
   public googleAuthRedirect(@Req() req: any) {
+    console.log({user: req.user});
     return this.queryBus.execute<LoginByGoogleQuery, void>(new LoginByGoogleQuery(req.user));
   }
 }
