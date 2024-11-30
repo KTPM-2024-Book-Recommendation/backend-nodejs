@@ -3,7 +3,6 @@ import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { PrismaService } from "src/database";
 import { GetCrawledStatisticsMonthlyQuery } from "./getCrawledStatisticsMonthly.query";
 import * as _ from "lodash";
-import { DashboardSersvice } from "../../services";
 
 
 @QueryHandler(GetCrawledStatisticsMonthlyQuery)
@@ -11,7 +10,6 @@ export class GetCrawledStatisticsMonthlyHandler
   implements IQueryHandler<GetCrawledStatisticsMonthlyQuery> {
   constructor(
     private readonly dbContext: PrismaService,
-    private readonly dashboardService: DashboardSersvice,
   ) { }
 
   public async execute(

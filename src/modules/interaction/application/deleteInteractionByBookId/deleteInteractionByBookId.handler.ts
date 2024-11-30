@@ -2,17 +2,21 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { PrismaService } from "src/database";
 import { DeleteReactionByBookIdCommand } from "./deleteInteractionByBookId.command";
+import { ValidationService } from "src/modules/services/validation.service";
 
 @CommandHandler(DeleteReactionByBookIdCommand)
 export class DeleteReactionByBookIdHandler
   implements ICommandHandler<DeleteReactionByBookIdCommand>
 {
-  constructor(private readonly dbContext: PrismaService) {}
+  constructor(private readonly dbContext: PrismaService, private readonly validationService: ValidationService) {}
 
   public async execute(command: DeleteReactionByBookIdCommand): Promise<void> {
     const { bookId, userId, type } = command;
 
-    await this.validate(command);
+    await Promise.all([
+      this.validationService.validateBookExists(bookId),
+      this.validationService.validateUserExists(userId)
+    ])
 
     await this.dbContext.interaction.delete({
       where: {
@@ -23,27 +27,5 @@ export class DeleteReactionByBookIdHandler
         },
       },
     });
-  }
-
-  private async validate(command: DeleteReactionByBookIdCommand) {
-    const [book, user] = await Promise.all([
-      this.dbContext.book.findUnique({
-        where: { id: command.bookId },
-        select: { id: true },
-      }),
-
-      this.dbContext.user.findUnique({
-        where: { id: command.userId },
-        select: { id: true },
-      }),
-    ]);
-
-    if (!book?.id) {
-      throw new NotFoundException("The book does not exist.");
-    }
-
-    if (!user?.id) {
-      throw new NotFoundException("The user does not exist.");
-    }
   }
 }

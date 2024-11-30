@@ -16,7 +16,7 @@ export class UpdateUserByIdRequestBody {
   @ApiProperty({
     description: "Name",
     maxLength: 255,
-    example: "Brita",
+    example: "Jasmine",
   })
   @Matches("^[A-Za-z ]+$", "", {
     message: "Name must be alphabetical",

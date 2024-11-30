@@ -16,7 +16,7 @@ export class CreateUserRequestBody {
   @ApiProperty({
     description: "Name",
     maxLength: 255,
-    example: "Brita",
+    example: "Jasmine",
   })
   @Matches("^[A-Za-z ]+$", "", {
     message: "Name must be alphabetical",
@@ -51,7 +51,7 @@ export class CreateUserRequestBody {
   @ApiProperty({
     description: "Email",
     maxLength: 255,
-    example: "brita@datahouse.com",
+    example: "jasmine@datahouse.com",
   })
   @Matches("^[a-zA-Z0-9_]+@[a-z]+.(com)", "", {
     message: "Email is not the right format",

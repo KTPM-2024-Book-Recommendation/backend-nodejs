@@ -70,7 +70,7 @@ export class PatchUserByIdHandler
     });
 
     if (!existedUser?.id) {
-      throw new NotFoundException("Not fount any user with this id");
+      throw new NotFoundException("User not found!");
     }
 
     if (action === PatchUserByIdAction.CHANGE_PASSWORD) {

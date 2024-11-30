@@ -6,7 +6,6 @@ import { GetBooksQueryResponse, GetBooksResponse } from "./getBooks.response";
 import { filterString } from "src/common/utils/string";
 import { PrismaService } from "src/database";
 import { BadRequestException } from "@nestjs/common";
-import { GetBooksOrderByEnum } from "../book.enum";
 
 @QueryHandler(GetBooksQuery)
 export class GetBooksHandler implements IQueryHandler<GetBooksQuery> {

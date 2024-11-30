@@ -4,6 +4,7 @@ import { DatabaseModule } from "src/database";
 import * as useCases from "./application";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule } from "@nestjs/config";
+import { ValidationService } from "../services/validation.service";
 
 const applications = Object.values(useCases);
 const endpoints = applications.filter((x) => x.name.endsWith("Endpoint"));
@@ -17,7 +18,7 @@ const handlers = applications.filter((x) => x.name.endsWith("Handler"));
     ConfigModule.forRoot(),
   ],
   controllers: [...endpoints],
-  providers: [...handlers],
+  providers: [...handlers, ValidationService],
   exports: [...handlers],
 })
 export class InteractionModule {}

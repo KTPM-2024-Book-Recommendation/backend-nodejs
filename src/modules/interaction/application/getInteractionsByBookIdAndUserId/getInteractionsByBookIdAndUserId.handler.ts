@@ -5,13 +5,13 @@ import { GetInteractionsByBookIdAndUserIdQuery } from "./getInteractionsByBookId
 import { GetInteractionsByBookIdAndUserIdQueryResponse } from "./getInteractionsByBookIdAndUserId.response";
 import * as _ from "lodash";
 import { NotFoundException } from "@nestjs/common";
-import { GetInteractionsOrderByEnum } from "src/modules/interaction/interaction.enum";
+import { ValidationService } from "src/modules/services/validation.service";
 
 @QueryHandler(GetInteractionsByBookIdAndUserIdQuery)
 export class GetInteractionsByBookIdAndUserIdHandler
   implements IQueryHandler<GetInteractionsByBookIdAndUserIdQuery>
 {
-  constructor(private readonly dbContext: PrismaService) {}
+  constructor(private readonly dbContext: PrismaService, private readonly validationService: ValidationService) {}
 
   public async execute({
     bookId, userId
@@ -29,7 +29,10 @@ export class GetInteractionsByBookIdAndUserIdHandler
       bookId, userId
     } = options;
 
-    await this.validate(bookId, userId);
+    await Promise.all([
+      this.validationService.validateBookExists(bookId),
+      this.validationService.validateUserExists(userId)
+    ])
 
     const interactions = this.dbContext.interaction.findMany({
       where: {
@@ -50,33 +53,5 @@ export class GetInteractionsByBookIdAndUserIdHandler
     });
 
     return interactions;
-  }
-
-  private async validate(bookId: string, userId: string) {
-    const book = await this.dbContext.book.findUnique({
-      where: {
-        id: bookId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!book) {
-      throw new NotFoundException("This book is not found");
-    }
-
-    const user = await this.dbContext.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException("This user is not found");
-    }
   }
 }

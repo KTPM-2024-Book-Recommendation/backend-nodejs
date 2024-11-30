@@ -3,10 +3,11 @@ import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { CreateBookCommand } from "./createBook.command";
 import { CreateBookRequestBody } from "./createBook.request-body";
 import { PrismaService } from "src/database";
+import { ValidationService } from "src/modules/services/validation.service";
 
 @CommandHandler(CreateBookCommand)
 export class CreateBookHandler implements ICommandHandler<CreateBookCommand> {
-  constructor(private readonly dbContext: PrismaService) {}
+  constructor(private readonly dbContext: PrismaService, private readonly validationService: ValidationService) {}
 
   public async execute(command: CreateBookCommand) {
     await this.createBook(command.body);
@@ -29,8 +30,8 @@ export class CreateBookHandler implements ICommandHandler<CreateBookCommand> {
       authorIds,
     } = body;
 
-    await this.validate({ authorIds: [...new Set(authorIds)] });
-
+    await this.validationService.validateAuthorsExists([...new Set(authorIds)]);
+    
     const book = await this.dbContext.book.create({
       data: {
         title,
@@ -53,22 +54,6 @@ export class CreateBookHandler implements ICommandHandler<CreateBookCommand> {
       await this.dbContext.authorToBook.createMany({
         data: authorIds.map((authorId) => ({ bookId: book.id, authorId })),
       });
-    }
-  }
-
-  async validate(option: { authorIds: string[] }) {
-    const { authorIds } = option;
-
-    const authors = await this.dbContext.author.findMany({
-      where: {
-        id: {
-          in: authorIds,
-        },
-      },
-    });
-
-    if (authors.length !== authorIds.length) {
-      throw new NotFoundException("Authors not found");
     }
   }
 }

@@ -62,11 +62,11 @@ export class UpdateUserByIdHandler
     ]);
 
     if (roleId && !existedRole?.id) {
-      throw new NotFoundException("The role does not exist");
+      throw new NotFoundException("The role does not exist.");
     }
 
     if (!existedUser?.id) {
-      throw new NotFoundException("Not fount any user with this id");
+      throw new NotFoundException("User not found!");
     }
   }
 }

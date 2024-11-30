@@ -44,7 +44,7 @@ export class GetBookByIdHandler implements IQueryHandler<GetBookByIdQuery> {
     });
 
     if (!book) {
-      throw new NotFoundException("The account does not exist.");
+      throw new NotFoundException("The book does not exist.");
     }
 
     return book;
@@ -53,7 +53,7 @@ export class GetBookByIdHandler implements IQueryHandler<GetBookByIdQuery> {
   public async execute(
     query: GetBookByIdQuery
   ): Promise<GetBookByIdQueryResponse> {
-    const Book = await this.getBookById(query.id);
-    return Book;
+    const book = await this.getBookById(query.id);
+    return book;
   }
 }

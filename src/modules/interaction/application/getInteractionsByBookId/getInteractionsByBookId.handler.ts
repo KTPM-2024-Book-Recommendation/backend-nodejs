@@ -6,12 +6,13 @@ import { GetInteractionsByBookIdQueryResponse } from "./getInteractionsByBookId.
 import * as _ from "lodash";
 import { NotFoundException } from "@nestjs/common";
 import { GetInteractionsOrderByEnum } from "src/modules/interaction/interaction.enum";
+import { ValidationService } from "src/modules/services/validation.service";
 
 @QueryHandler(GetInteractionsByBookIdQuery)
 export class GetInteractionsByBookIdHandler
   implements IQueryHandler<GetInteractionsByBookIdQuery>
 {
-  constructor(private readonly dbContext: PrismaService) {}
+  constructor(private readonly dbContext: PrismaService, private readonly validationService: ValidationService) {}
 
   public async execute({
     query,
@@ -42,7 +43,7 @@ export class GetInteractionsByBookIdHandler
       query: { type, page, perPage, order },
     } = options;
 
-    await this.validate(bookId);
+    await this.validationService.validateBookExists(bookId);
 
     let whereCondition: Prisma.InteractionWhereInput = { bookId };
 
@@ -80,21 +81,6 @@ export class GetInteractionsByBookIdHandler
     ]);
 
     return { total, interactions };
-  }
-
-  private async validate(bookId: string) {
-    const book = await this.dbContext.book.findUnique({
-      where: {
-        id: bookId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!book) {
-      throw new NotFoundException("This news is not found");
-    }
   }
 
   private getOrderBy(order?: string) {

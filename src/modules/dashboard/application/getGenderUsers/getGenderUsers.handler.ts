@@ -3,14 +3,12 @@ import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { PrismaService } from "src/database";
 import { GetGenderUsersQuery } from "./getGenderUsers.query";
 import * as _ from "lodash";
-import { DashboardSersvice } from "../../services";
 
 @QueryHandler(GetGenderUsersQuery)
 export class GetGenderUsersHandler
   implements IQueryHandler<GetGenderUsersQuery> {
   constructor(
     private readonly dbContext: PrismaService,
-    private readonly dashboardService: DashboardSersvice,
   ) { }
 
   public async execute(

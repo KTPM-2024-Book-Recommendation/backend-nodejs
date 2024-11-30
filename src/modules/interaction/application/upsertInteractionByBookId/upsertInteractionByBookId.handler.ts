@@ -1,13 +1,13 @@
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { PrismaService } from "src/database";
 import { UpsertInteractionByBookIdCommand } from "./upsertInteractionByBookId.command";
-import { NotFoundException } from "@nestjs/common";
 import { InteractionType } from "@prisma/client";
+import { ValidationService } from "src/modules/services/validation.service";
 
 @CommandHandler(UpsertInteractionByBookIdCommand)
 export class UpdateUserByIdHandler
   implements ICommandHandler<UpsertInteractionByBookIdCommand> {
-  constructor(private readonly dbContext: PrismaService) { }
+  constructor(private readonly dbContext: PrismaService, private readonly validationService: ValidationService) { }
 
   public async execute(
     command: UpsertInteractionByBookIdCommand
@@ -17,7 +17,10 @@ export class UpdateUserByIdHandler
       body: { bookId, type, value },
     } = command;
 
-    const { book } = await this.validate({ bookId, userId });
+    const [book, user] = await Promise.all([
+      this.validationService.validateBookExists(bookId),
+      this.validationService.validateUserExists(userId)
+    ])
 
     const { oldValue, newValue, existedInteraction } = await this.getValue({ bookId, type, value, userId });
 
@@ -97,41 +100,5 @@ export class UpdateUserByIdHandler
             ? prevInteraction.value + 1 : 1,
       existedInteraction: Boolean(prevInteraction)
     };
-  }
-
-  private async validate(option: { bookId: string; userId: string }) {
-    const { bookId, userId } = option;
-
-    const [book, user] = await Promise.all([
-      this.dbContext.book.findUnique({
-        where: {
-          id: bookId,
-        },
-        select: {
-          id: true,
-          averageRating: true,
-          numberOfRatings: true
-        },
-      }),
-
-      this.dbContext.user.findUnique({
-        where: {
-          id: userId,
-        },
-        select: {
-          id: true,
-        },
-      }),
-    ]);
-
-    if (!book?.id) {
-      throw new NotFoundException("The book does not exist");
-    }
-
-    if (!user) {
-      throw new NotFoundException("The user does not exist");
-    }
-
-    return { book, user }
   }
 }
