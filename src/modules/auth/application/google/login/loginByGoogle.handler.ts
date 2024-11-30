@@ -23,6 +23,7 @@ export class LoginByGoogleHandler implements IQueryHandler<LoginByGoogleQuery> {
     const user = await this.dbContext.user.upsert({
       where: {
         email,
+        loginType: LoginType.GOOGLE
       },
       update: {
         email,
